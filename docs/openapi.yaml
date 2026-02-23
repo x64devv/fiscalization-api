@@ -1,0 +1,548 @@
+openapi: 3.0.3
+info:
+  title: ZIMRA Fiscalization API
+  description: |
+    API for ZIMRA Fiscal Device Gateway v7.2
+    
+    This API implements the Zimbabwe Revenue Authority (ZIMRA) fiscalization requirements
+    for electronic fiscal devices.
+    
+    ## Authentication
+    Most endpoints require certificate-based authentication using client certificates.
+    
+    ## Base URL
+    - Development: `http://localhost:8080`
+    - Production: `https://fiscalization.zimra.co.zw`
+    
+  version: 1.0.0
+  contact:
+    name: ZIMRA Support
+    email: support@zimra.co.zw
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://fiscalization.zimra.co.zw
+    description: Production server
+
+tags:
+  - name: health
+    description: Health check endpoints
+  - name: device
+    description: Device management operations
+  - name: fiscal-day
+    description: Fiscal day operations
+  - name: receipt
+    description: Receipt submission and management
+  - name: user
+    description: User management operations
+  - name: stock
+    description: Stock management
+
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Health check
+      description: Check if the API is running
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  service:
+                    type: string
+                    example: ZIMRA Fiscalization API
+                  version:
+                    type: string
+                    example: 1.0.0
+
+  /api/v1/device/verify-taxpayer:
+    post:
+      tags:
+        - device
+      summary: Verify taxpayer information
+      description: Verify taxpayer details before device registration
+      parameters:
+        - name: DeviceModelName
+          in: header
+          required: true
+          schema:
+            type: string
+          example: ZIMRA-POS-2000
+        - name: DeviceModelVersionNo
+          in: header
+          required: true
+          schema:
+            type: string
+          example: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceID
+                - activationKey
+                - deviceSerialNo
+              properties:
+                deviceID:
+                  type: integer
+                  example: 1001
+                activationKey:
+                  type: string
+                  example: "ABC12345"
+                deviceSerialNo:
+                  type: string
+                  example: "DEV-001-2024"
+      responses:
+        '200':
+          description: Taxpayer verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyTaxpayerResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/device/register:
+    post:
+      tags:
+        - device
+      summary: Register device
+      description: Register a new fiscal device
+      parameters:
+        - name: DeviceModelName
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: DeviceModelVersionNo
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceID
+                - activationKey
+                - certificateRequest
+              properties:
+                deviceID:
+                  type: integer
+                activationKey:
+                  type: string
+                certificateRequest:
+                  type: string
+                  description: Base64-encoded CSR
+      responses:
+        '200':
+          description: Device registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistrationResponse'
+
+  /api/v1/device/config:
+    get:
+      tags:
+        - device
+      summary: Get device configuration
+      description: Retrieve device configuration and settings
+      security:
+        - CertificateAuth: []
+      responses:
+        '200':
+          description: Configuration retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConfigResponse'
+
+  /api/v1/fiscal-day/open:
+    post:
+      tags:
+        - fiscal-day
+      summary: Open fiscal day
+      description: Open a new fiscal day for the device
+      security:
+        - CertificateAuth: []
+      responses:
+        '200':
+          description: Fiscal day opened
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenFiscalDayResponse'
+
+  /api/v1/fiscal-day/close:
+    post:
+      tags:
+        - fiscal-day
+      summary: Close fiscal day
+      description: Close the current fiscal day
+      security:
+        - CertificateAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fiscalDayDeviceSignature:
+                  $ref: '#/components/schemas/SignatureData'
+                fiscalDayCounters:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FiscalDayCounter'
+      responses:
+        '200':
+          description: Fiscal day closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloseFiscalDayResponse'
+
+  /api/v1/receipt/submit:
+    post:
+      tags:
+        - receipt
+      summary: Submit receipt
+      description: Submit a fiscal receipt
+      security:
+        - CertificateAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitReceiptRequest'
+      responses:
+        '200':
+          description: Receipt submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitReceiptResponse'
+
+  /api/v1/users/login:
+    post:
+      tags:
+        - user
+      summary: User login
+      description: Authenticate user and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+components:
+  securitySchemes:
+    CertificateAuth:
+      type: http
+      scheme: mutual
+      description: Client certificate authentication
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "about:blank"
+        title:
+          type: string
+          example: "Validation error"
+        status:
+          type: integer
+          example: 422
+        errorCode:
+          type: string
+          example: "DEV01"
+
+    VerifyTaxpayerResponse:
+      type: object
+      properties:
+        operationID:
+          type: string
+          format: uuid
+        taxPayerName:
+          type: string
+        taxPayerTIN:
+          type: string
+        vatNumber:
+          type: string
+        deviceBranchName:
+          type: string
+        deviceBranchAddress:
+          $ref: '#/components/schemas/Address'
+
+    DeviceRegistrationResponse:
+      type: object
+      properties:
+        operationID:
+          type: string
+          format: uuid
+        certificate:
+          type: string
+          description: PEM-encoded certificate
+
+    GetConfigResponse:
+      type: object
+      properties:
+        operationID:
+          type: string
+        taxPayerName:
+          type: string
+        taxPayerTIN:
+          type: string
+        deviceSerialNo:
+          type: string
+        applicableTaxes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tax'
+
+    OpenFiscalDayResponse:
+      type: object
+      properties:
+        operationID:
+          type: string
+        fiscalDayNo:
+          type: integer
+
+    CloseFiscalDayResponse:
+      type: object
+      properties:
+        operationID:
+          type: string
+        fiscalDayServerSignature:
+          $ref: '#/components/schemas/SignatureDataEx'
+        fiscalDayCounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiscalDayCounter'
+
+    SubmitReceiptRequest:
+      type: object
+      required:
+        - receipt
+      properties:
+        receipt:
+          $ref: '#/components/schemas/Receipt'
+
+    SubmitReceiptResponse:
+      type: object
+      properties:
+        operationID:
+          type: string
+        receiptID:
+          type: integer
+          format: int64
+        serverDate:
+          type: string
+          format: date-time
+        receiptServerSignature:
+          $ref: '#/components/schemas/SignatureDataEx'
+
+    LoginResponse:
+      type: object
+      properties:
+        operationID:
+          type: string
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/UserInfo'
+
+    Address:
+      type: object
+      properties:
+        province:
+          type: string
+        city:
+          type: string
+        street:
+          type: string
+        houseNo:
+          type: string
+
+    Tax:
+      type: object
+      properties:
+        taxID:
+          type: integer
+        taxName:
+          type: string
+        taxPercent:
+          type: number
+          format: double
+        taxValidFrom:
+          type: string
+          format: date
+        taxValidTill:
+          type: string
+          format: date
+
+    SignatureData:
+      type: object
+      properties:
+        hash:
+          type: string
+          format: byte
+        signature:
+          type: string
+          format: byte
+
+    SignatureDataEx:
+      allOf:
+        - $ref: '#/components/schemas/SignatureData'
+        - type: object
+          properties:
+            certificateThumbprint:
+              type: string
+              format: byte
+
+    FiscalDayCounter:
+      type: object
+      properties:
+        fiscalCounterType:
+          type: integer
+        fiscalCounterCurrency:
+          type: string
+        fiscalCounterValue:
+          type: number
+          format: double
+
+    Receipt:
+      type: object
+      required:
+        - receiptType
+        - receiptCurrency
+        - receiptCounter
+        - receiptGlobalNo
+        - receiptDate
+        - receiptTotal
+        - receiptLines
+        - receiptTaxes
+        - receiptPayments
+      properties:
+        receiptType:
+          type: integer
+        receiptCurrency:
+          type: string
+        receiptCounter:
+          type: integer
+        receiptGlobalNo:
+          type: integer
+        invoiceNo:
+          type: string
+        receiptDate:
+          type: string
+          format: date-time
+        receiptTotal:
+          type: number
+          format: double
+        receiptLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceiptLine'
+        receiptTaxes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceiptTax'
+        receiptPayments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+
+    ReceiptLine:
+      type: object
+      properties:
+        receiptLineNo:
+          type: integer
+        receiptLineName:
+          type: string
+        receiptLinePrice:
+          type: number
+        receiptLineQuantity:
+          type: number
+        receiptLineTotal:
+          type: number
+
+    ReceiptTax:
+      type: object
+      properties:
+        taxID:
+          type: integer
+        taxCode:
+          type: string
+        taxPercent:
+          type: number
+        taxAmount:
+          type: number
+        salesAmountWithTax:
+          type: number
+
+    Payment:
+      type: object
+      properties:
+        moneyTypeCode:
+          type: integer
+        paymentAmount:
+          type: number
+
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        role:
+          type: string

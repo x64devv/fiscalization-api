@@ -1,0 +1,40 @@
+server:
+  port: 8080
+  mode: development  # development or production
+  read_timeout: 30
+  write_timeout: 30
+
+database:
+  host: localhost
+  port: 5432
+  user: fiscalization
+  password: your_password_here
+  dbname: fiscalization_db
+  sslmode: disable
+  max_open_conns: 25
+  max_idle_conns: 5
+  migrations_path: migrations
+
+crypto:
+  certificate_path: certs/server.crt
+  private_key_path: certs/server.key
+  ca_certificate_path: certs/ca.crt
+  certificate_validity_days: 365
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+smtp:
+  host: smtp.example.com
+  port: 587
+  username: noreply@example.com
+  password: your_smtp_password
+  from: noreply@example.com
+
+sms:
+  provider: twilio  # or africas_talking, etc.
+  api_key: your_sms_api_key
+  sender: ZIMRA

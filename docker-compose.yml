@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fiscalization-postgres
+    environment:
+      POSTGRES_USER: fiscalization
+      POSTGRES_PASSWORD: fiscalization_password
+      POSTGRES_DB: fiscalization_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fiscalization"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fiscalization-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: fiscalization-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - fiscalization-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fiscalization-api
+    environment:
+      - CONFIG_PATH=/app/configs/config.yaml
+      - DB_HOST=postgres
+      - DB_PASSWORD=fiscalization_password
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./configs:/app/configs
+      - ./certs:/app/certs
+    networks:
+      - fiscalization-network
+    restart: unless-stopped
+
+  # Optional: Database migration service
+  migrate:
+    image: migrate/migrate
+    container_name: fiscalization-migrate
+    volumes:
+      - ./migrations:/migrations
+    command: [
+      "-path", "/migrations",
+      "-database", "postgresql://fiscalization:fiscalization_password@postgres:5432/fiscalization_db?sslmode=disable",
+      "up"
+    ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fiscalization-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  fiscalization-network:
+    driver: bridge
