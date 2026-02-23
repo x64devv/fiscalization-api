@@ -357,6 +357,3 @@ For issues and questions:
 - ZIMRA for the fiscalization specification
 - Go community for excellent libraries
 - Contributors and maintainers
-#   f i s c a l i z a t i o n - a p i 
- 
- 
