@@ -52,7 +52,7 @@ fiscalization-api/
 
 ### Prerequisites
 
-- Go 1.21 or higher
+- Go 1.26 or higher
 - PostgreSQL 15+
 - Redis 7+
 - Docker & Docker Compose (optional)
@@ -357,5 +357,6 @@ For issues and questions:
 - ZIMRA for the fiscalization specification
 - Go community for excellent libraries
 - Contributors and maintainers
-#   f i s c a l i z a t i o n - a p i  
+#   f i s c a l i z a t i o n - a p i 
+ 
  
