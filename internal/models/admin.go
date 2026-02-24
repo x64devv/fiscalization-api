@@ -131,3 +131,26 @@ type AdminLoginResponse struct {
 	Username  string    `json:"username"`
 	Role      string    `json:"role"`
 }
+
+type AdminCreateUserRequest struct {
+	TaxpayerID    int64  `json:"taxpayerID"`
+	Username      string `json:"username" binding:"required,max=100"`
+	Password      string `json:"password" binding:"required,max=100"`
+	PersonName    string `json:"personName" binding:"required,max=100"`
+	PersonSurname string `json:"personSurname" binding:"required,max=100"`
+	UserRole      string `json:"userRole" binding:"required,max=100"`
+	Email         string `json:"email" binding:"required,max=100"`
+	PhoneNo       string `json:"phoneNo" binding:"required,max=20"`
+}
+
+type AdminUserRow struct {
+	ID            int64     `json:"id" db:"id"`
+	Username      string    `json:"username" db:"username"`
+	PersonName    string    `json:"personName" db:"person_name"`
+	PersonSurname string    `json:"personSurname" db:"person_surname"`
+	UserRole      string    `json:"userRole" db:"user_role"`
+	Email         string    `json:"email" db:"email"`
+	PhoneNo       string    `json:"phoneNo" db:"phone_no"`
+	Status        int       `json:"status" db:"status"`
+	CreatedAt     time.Time `json:"createdAt" db:"created_at"`
+}

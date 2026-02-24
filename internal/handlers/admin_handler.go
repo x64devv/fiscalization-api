@@ -300,3 +300,40 @@ func (h *AdminHandler) ListAuditLogs(c *gin.Context) {
 	}
 	api.SuccessResponse(c, resp)
 }
+
+
+//adding admin
+// GET /api/admin/companies/:id/users
+func (h *AdminHandler) ListCompanyUsers(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		api.ValidationErrorResponse(c, "Invalid company ID")
+		return
+	}
+	rows, err := h.adminService.ListCompanyUsers(id)
+	if err != nil {
+		api.ErrorResponse(c, err)
+		return
+	}
+	api.SuccessResponse(c, gin.H{"total": len(rows), "rows": rows})
+}
+
+// POST /api/admin/companies/:id/users
+func (h *AdminHandler) CreateCompanyUser(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		api.ValidationErrorResponse(c, "Invalid company ID")
+		return
+	}
+	var req models.AdminCreateUserRequest
+	if !api.BindJSON(c, &req) {
+		return
+	}
+	req.TaxpayerID = id
+	user, err := h.adminService.CreateCompanyUser(req)
+	if err != nil {
+		api.ErrorResponse(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, user)
+}

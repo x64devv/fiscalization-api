@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AdminService struct {
@@ -253,4 +254,52 @@ func (s *AdminService) ListAuditLogs(entityType string, entityID *int64, offset,
 	return &models.ListAuditLogsResponse{Total: total, Rows: rows}, nil
 }
 
+
+func (s *AdminService) CreateCompanyUser(req models.AdminCreateUserRequest) (*models.AdminUserRow, error) {
+	// verify company exists
+	tp, err := s.adminRepo.GetTaxpayerByID(req.TaxpayerID)
+	if err != nil || tp == nil {
+		return nil, models.NewAPIError(404, "Company not found", "ADM11")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &models.User{
+		TaxpayerID:    req.TaxpayerID,
+		Username:      req.Username,
+		PasswordHash:  string(hash),
+		PersonName:    req.PersonName,
+		PersonSurname: req.PersonSurname,
+		UserRole:      req.UserRole,
+		Email:         req.Email,
+		PhoneNo:       req.PhoneNo,
+		Status:        models.UserStatusActive, // active immediately, no confirm step
+	}
+
+	if err := s.adminRepo.CreateUser(user); err != nil {
+		return nil, err
+	}
+
+	id := user.ID
+	s.audit("user", "create", &id, nil, "Username: "+user.Username+" Company: "+tp.Name)
+
+	return &models.AdminUserRow{
+		ID:            user.ID,
+		Username:      user.Username,
+		PersonName:    user.PersonName,
+		PersonSurname: user.PersonSurname,
+		UserRole:      user.UserRole,
+		Email:         user.Email,
+		PhoneNo:       user.PhoneNo,
+		Status:        int(user.Status),
+		CreatedAt:     user.CreatedAt,
+	}, nil
+}
+
+func (s *AdminService) ListCompanyUsers(taxpayerID int64) ([]models.AdminUserRow, error) {
+	return s.adminRepo.ListUsersByTaxpayer(taxpayerID)
+}
 

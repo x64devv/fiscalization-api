@@ -180,6 +180,8 @@ func setupRoutes(
 		co.PUT("/:id", adminHandler.UpdateCompany)
 		co.PATCH("/:id/status", adminHandler.SetCompanyStatus)
 		co.GET("/:id/devices", adminHandler.ListCompanyDevices)
+		co.GET("/:id/users", adminHandler.ListCompanyUsers)
+		co.POST("/:id/users", adminHandler.CreateCompanyUser)
 
 		dv := ap.Group("/devices")
 		dv.GET("", adminHandler.ListAllDevices)

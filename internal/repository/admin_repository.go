@@ -40,6 +40,10 @@ type AdminRepository interface {
 
 	// System stats
 	GetSystemStats() (*models.SystemStats, error)
+
+	//Admin
+	CreateUser(user *models.User) error
+	ListUsersByTaxpayer(taxpayerID int64) ([]models.AdminUserRow, error)
 }
 
 type adminRepository struct {
@@ -332,4 +336,26 @@ func (r *adminRepository) GetSystemStats() (*models.SystemStats, error) {
 		`SELECT COALESCE(SUM(receipt_total), 0) FROM receipts WHERE receipt_date >= CURRENT_DATE AND receipt_type = 0`)
 
 	return stats, nil
+}
+
+
+//admin
+
+func (r *adminRepository) CreateUser(user *models.User) error {
+	return r.db.QueryRow(`
+		INSERT INTO users (taxpayer_id, username, password_hash, person_name, person_surname, email, phone_no, user_role, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, created_at, updated_at`,
+		user.TaxpayerID, user.Username, user.PasswordHash,
+		user.PersonName, user.PersonSurname,
+		user.Email, user.PhoneNo, user.UserRole, user.Status,
+	).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
+}
+
+func (r *adminRepository) ListUsersByTaxpayer(taxpayerID int64) ([]models.AdminUserRow, error) {
+	var rows []models.AdminUserRow
+	err := r.db.Select(&rows,
+		`SELECT id, username, person_name, person_surname, user_role, email, phone_no, status, created_at
+		 FROM users WHERE taxpayer_id = $1 ORDER BY created_at DESC`, taxpayerID)
+	return rows, err
 }
