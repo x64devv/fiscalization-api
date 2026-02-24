@@ -13,9 +13,9 @@ type Device struct {
 	DeviceModelName     string              `json:"device_model_name" db:"device_model_name"`
 	DeviceModelVersion  string              `json:"device_model_version" db:"device_model_version"`
 	ActivationKey       string              `json:"-" db:"activation_key"` // Don't expose in JSON
-	Certificate         string              `json:"certificate,omitempty" db:"certificate"`
+	Certificate         *string              `json:"certificate,omitempty" db:"certificate"`
 	CertificateThumbprint []byte            `json:"-" db:"certificate_thumbprint"`
-	CertificateValidTill time.Time          `json:"certificate_valid_till" db:"certificate_valid_till"`
+	CertificateValidTill *time.Time          `json:"certificate_valid_till" db:"certificate_valid_till"`
 	OperatingMode       DeviceOperatingMode `json:"operating_mode" db:"operating_mode"`
 	Status              string              `json:"status" db:"status"` // Active, Blocked, Revoked
 	BranchName          string              `json:"branch_name" db:"branch_name"`
@@ -87,7 +87,7 @@ type GetConfigResponse struct {
 	TaxPayerDayMaxHrs                 int                 `json:"taxPayerDayMaxHrs"`
 	TaxpayerDayEndNotificationHrs     int                 `json:"taxpayerDayEndNotificationHrs"`
 	ApplicableTaxes                   []Tax               `json:"applicableTaxes"`
-	CertificateValidTill              time.Time           `json:"certificateValidTill"`
+	CertificateValidTill              *time.Time           `json:"certificateValidTill"`
 	QrURL                             string              `json:"qrUrl"`
 }
 

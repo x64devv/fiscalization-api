@@ -41,7 +41,7 @@ migrate-create: ## Create a new migration (usage: make migrate-create NAME=migra
 
 migrate-up: ## Run database migrations up
 	@echo "Running migrations up..."
-	migrate -path migrations -database "postgresql://fiscalization:password@localhost:5432/fiscalization_db?sslmode=disable" up
+	migrate -path migrations -database "postgresql://postgres:mysecretpassword@0.0.0.0:5432/fiscalization_db?sslmode=disable" up
 
 migrate-down: ## Run database migrations down
 	@echo "Running migrations down..."

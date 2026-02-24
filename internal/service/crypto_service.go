@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
 	"fiscalization-api/internal/config"
@@ -228,7 +229,7 @@ func (s *CryptoService) GetServerCertificate(thumbprint []byte) ([]string, time.
 func readFile(path string) ([]byte, error) {
 	// This would use os.ReadFile in production
 	// For now, placeholder
-	return nil, fmt.Errorf("file reading not implemented")
+	return os.ReadFile(path)
 }
 
 func parsePrivateKey(keyPEM []byte) (crypto.PrivateKey, error) {

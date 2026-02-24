@@ -391,16 +391,16 @@ func (r *fiscalDayRepository) compareCounters(submitted, actual []models.FiscalD
 }
 
 func (r *fiscalDayRepository) counterKey(c models.FiscalDayCounter) string {
-	key := string(c.FiscalCounterType) + "_" + c.FiscalCounterCurrency + "_"
+	key := string(rune(c.FiscalCounterType)) + "_" + c.FiscalCounterCurrency + "_"
 
 	if c.FiscalCounterTaxID != nil {
-		key += string(*c.FiscalCounterTaxID) + "_"
+		key += string(rune(*c.FiscalCounterTaxID)) + "_"
 	}
 	if c.FiscalCounterTaxPercent != nil {
 		key += fmt.Sprintf("%.2f", *c.FiscalCounterTaxPercent) + "_"
 	}
 	if c.FiscalCounterMoneyType != nil {
-		key += string(*c.FiscalCounterMoneyType)
+		key += fmt.Sprint(*c.FiscalCounterMoneyType)
 	}
 
 	return key

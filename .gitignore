@@ -53,3 +53,7 @@ certs/*.pem
 # Environment
 .env
 .env.local
+
+
+#configs
+configs/config.yaml

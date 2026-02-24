@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -27,17 +28,34 @@ func NoContentResponse(c *gin.Context) {
 // ErrorResponse sends an error response
 func ErrorResponse(c *gin.Context, err error) {
 	if apiErr, ok := err.(*models.APIError); ok {
+		if apiErr.Status >= 500 {
+			log.Printf("[ERROR] %s %s → %d %s | %v", c.Request.Method, c.Request.URL.Path, apiErr.Status, apiErr.Title, apiErr)
+		}
 		c.JSON(apiErr.Status, apiErr)
 		return
 	}
-	
-	// Default to 500 internal server error
+
+	// Unexpected error - log the full thing
+	log.Printf("[ERROR] %s %s → 500 | %v", c.Request.Method, c.Request.URL.Path, err)
 	c.JSON(http.StatusInternalServerError, models.APIError{
 		Type:   "about:blank",
 		Title:  "Internal server error",
 		Status: http.StatusInternalServerError,
 	})
 }
+// func ErrorResponse(c *gin.Context, err error) {
+// 	if apiErr, ok := err.(*models.APIError); ok {
+// 		c.JSON(apiErr.Status, apiErr)
+// 		return
+// 	}
+	
+// 	// Default to 500 internal server error
+// 	c.JSON(http.StatusInternalServerError, models.APIError{
+// 		Type:   "about:blank",
+// 		Title:  "Internal server error",
+// 		Status: http.StatusInternalServerError,
+// 	})
+// }
 
 // ValidationErrorResponse sends a 400 bad request response
 func ValidationErrorResponse(c *gin.Context, message string) {
